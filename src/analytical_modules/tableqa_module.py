@@ -2,6 +2,8 @@
 import pandas as pd
 import numpy as np
 import traceback
+
+import sklearn
 from src.utils import clean_code, is_code_safe, run_with_timeout
 from scipy import stats
 from collections import Counter
@@ -32,7 +34,7 @@ class TableQAModule:
         **Rules**
         - Use dataframe name 'df'.
         - Assign the final answer to 'result'.
-        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, and `scipy.stats (stats)` are already imported.
+        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, `scipy.stats (stats)`, and `scikit-learn (sklearn)` are already imported.
         - Only use columns and data types shown in the summary. Do **not** assume others. 
         - You may create temp DataFrames/Series/columns but never modify 'df'.
         - Handle comma-separated values using `str.split(r'\\s*,\\s*', regex=True)` or `explode()`.
@@ -116,7 +118,7 @@ class TableQAModule:
                 "slice": slice,
             }
 
-            safes = {"pd": pd, "np": np, "stats": stats, "Counter": Counter,
+            safes = {"pd": pd, "np": np, "stats": stats, "Counter": Counter, "sklearn": sklearn,
                      "__builtins__": safe_builtins,"df" : self.df.copy()}
 
             # execute the generated code (it should assign the output to variable `result`)

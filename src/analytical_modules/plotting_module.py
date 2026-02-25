@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
+import sklearn
 import traceback
 from scipy import stats
 from src.utils import clean_code, is_code_safe, run_with_timeout
@@ -44,7 +45,7 @@ class PlottingModule:
         - Use the dataframe variable name 'df'.
         - Assign the final figure object to a variable named 'result'.
         - In addition, create a pandas DataFrame named `plot_data` that contains the exact data used to construct the plot (one row per point/bar/etc).
-        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, `plotly.express (px)`, `plotly.graph_objects (go)`, `scipy.stats (stats)`, `matplotlib.pyplot (plt)`, `venn2` and `venn3` are already imported.
+        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, `plotly.express (px)`, `plotly.graph_objects (go)`, `scipy.stats (stats)`, `matplotlib.pyplot (plt)`, `venn2`, `venn3`, and `scikit-learn (sklearn)` are already imported.
         - Only use columns and data types shown in the summary. Do **not** assume any others.
         - You may create temporary variables, but never modify or overwrite 'df'.
         - When splitting comma-separated values, ALWAYS assign and explode within the SAME DataFrame (e.g., df_copy['col'] = df_copy['col'].str.split(...); df_copy = df_copy.explode('col')). Never create a separate exploded Series and assign it back.
@@ -135,7 +136,7 @@ class PlottingModule:
             
             safes = {
                 "pd": pd, "np": np, "stats": stats, "sns":sns, "px":px, "go":go, "plt":plt,
-                "venn2":venn2, "venn3":venn3, "Counter": Counter, 
+                "venn2":venn2, "venn3":venn3, "Counter": Counter, "sklearn": sklearn,
                 "__builtins__": safe_builtins, "df" : self.df.copy()   
             }
 

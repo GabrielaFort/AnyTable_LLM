@@ -2,6 +2,7 @@
 import pandas as pd 
 import numpy as np
 from scipy import stats
+import sklearn
 import traceback
 from src.utils import clean_code, is_code_safe, run_with_timeout
 from collections import Counter
@@ -31,7 +32,7 @@ class StatisticsModule:
         - The input dataframe is named 'df'.
         - Assign the final answer to a variable named 'result'.
         - Each row corresponds to one subject/sample.
-        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, and `scipy.stats (stats)` are already imported.
+        - Do **not** include any import statements — assume `pandas (pd)`, `numpy (np)`, `scipy.stats (stats)` and `scikit-learn (sklearn)` are already imported.
         - Only use columns and data types shown in the summary. Do **not** assume any others.
         - You may create temporary variables, but never modify or overwrite 'df'.
         - **SAFETY**: Never include code that writes to disk or removes files, accesses the network, or executes system commands.
@@ -131,7 +132,7 @@ class StatisticsModule:
             }
             
             # Provide a copy of the dataframe to avoid modifications
-            safes = {"pd": pd, "np": np, "stats": stats, "Counter": Counter,
+            safes = {"pd": pd, "np": np, "stats": stats, "Counter": Counter, "sklearn": sklearn,
                      "__builtins__": safe_builtins,"df" : self.df.copy()} 
 
             # execute the generated code (it should assign the output to variable `result`)
