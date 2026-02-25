@@ -166,6 +166,91 @@ def apply_default_style(fig):
 # Matplot lib venn viagram style
 plt.rcParams.update({"font.size": 14})
 
+
+# Helper function to build a compact schema summary for the dashboard
+def build_schema_summary(df: pd.DataFrame):
+    """Return a compact schema summary table for dashboard display."""
+    total_rows = max(len(df), 1)
+    rows = []
+    for col in df.columns:
+        s = df[col]
+        non_null = int(s.notna().sum())
+        unique = int(s.nunique(dropna=True))
+        sample_vals = ", ".join(
+            map(str, s.dropna().astype(str).drop_duplicates().head(3).tolist())
+        )
+        rows.append(
+            {
+                "column": col,
+                "dtype": str(s.dtype),
+                "non_null_%": round(non_null / total_rows * 100, 2),
+                "missing_%": round((1 - (non_null / total_rows)) * 100, 2),
+                "unique": unique,
+                "sample_values": sample_vals,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def build_numeric_plot_candidates(
+    df: pd.DataFrame,
+    min_parse_ratio: float = 0.75,
+    max_alpha_ratio: float = 0.8,
+):
+    """
+    Build numeric series candidates for plotting.
+    Includes true numeric columns and object/category columns that are mostly parseable to numeric.
+    """
+    candidates = {}
+    parse_info = {}
+
+    # Keep native numeric columns as-is
+    for col in df.select_dtypes(include=[np.number]).columns:
+        series = pd.to_numeric(df[col], errors="coerce")
+        candidates[col] = series
+        parse_info[col] = {"converted": False, "parse_ratio": 1.0}
+
+    # Try coercing object-like columns with conservative cleaning.
+    # Guard against ID-like fields (e.g., AvatarKey123) by skipping columns
+    # where most non-null values contain alphabetic characters.
+    object_like_cols = df.select_dtypes(include=["object", "category"]).columns
+    for col in object_like_cols:
+        s = df[col]
+        s_non_null = s.dropna().astype(str).str.strip()
+        if s_non_null.empty:
+            continue
+
+        alpha_ratio = float(s_non_null.str.contains(r"[A-Za-z]", regex=True).mean())
+        if alpha_ratio >= max_alpha_ratio:
+            continue
+
+        cleaned = (
+            s.astype(str)
+            .str.strip()
+            .str.replace(r"^\s*$", "", regex=True)
+            .str.replace(r"(?i)^(na|n/a|none|null|unknown)$", "", regex=True)
+            .str.replace(",", "", regex=False)
+        )
+        cleaned = cleaned.mask(cleaned.eq(""), np.nan)
+        parsed = pd.to_numeric(cleaned, errors="coerce")
+
+        valid_non_null = s.notna().sum()
+        if valid_non_null == 0:
+            continue
+        parse_ratio = float(parsed.notna().sum() / valid_non_null)
+
+        if parse_ratio >= min_parse_ratio:
+            label = f"{col}"
+            candidates[label] = parsed
+            parse_info[label] = {
+                "converted": True,
+                "parse_ratio": parse_ratio,
+                "alpha_ratio": alpha_ratio,
+                "source_col": col,
+            }
+
+    return candidates, parse_info
+
 #----------------# Main App Code #------------------------
 
 # Setup app layout 
@@ -174,13 +259,7 @@ st.title("Any Table LLM Assistant")
 # Introduction section
 st.markdown("""
 Welcome to the **Any Table LLM Assistant**, a natural-language interface to explore tabular data.
-
-Use this tool to:
-- Ask natural language questions about your dataset
-- Get answers in the form of tables, statistics, or plots  
-- Generate plots or summaries of your data
-- Automatically produce reproducible Python code
-            
+          
 ---
 """)
 
@@ -303,6 +382,99 @@ elif str(st.session_state["df_source"]).startswith("example:"):
 st.dataframe(df, width='stretch', hide_index=True)
 
 st.markdown("---")
+
+with st.expander("See data summary dashboard"):
+    st.header("Data Summary Dashboard")
+
+    # Quick metrics
+    total_cells = int(df.shape[0] * df.shape[1])
+    missing_cells = int(df.isna().sum().sum())
+    missing_pct = (missing_cells / total_cells * 100) if total_cells else 0
+    dup_rows = int(df.duplicated().sum())
+    dup_pct = (dup_rows / df.shape[0] * 100) if df.shape[0] else 0
+
+    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    with metric_col1:
+        st.metric("Rows", f"{df.shape[0]:,}")
+    with metric_col2:
+        st.metric("Columns", f"{df.shape[1]:,}")
+    with metric_col3:
+        st.metric("Missing Cells", f"{missing_pct:.2f}%")
+    with metric_col4:
+        st.metric("Duplicate Rows", f"{dup_pct:.2f}%")
+
+    # Schema summary
+    st.subheader("Schema Overview")
+    schema_df = build_schema_summary(df)
+    st.dataframe(schema_df, width="stretch", hide_index=True)
+
+    # Basic distributions
+    numeric_candidates, parse_info = build_numeric_plot_candidates(df)
+    coerced_source_cols = {
+        info["source_col"] for info in parse_info.values() if info.get("converted")
+    }
+
+    dist_col1, dist_col2 = st.columns(2)
+    with dist_col1:
+        st.subheader("Categorical Distribution")
+        categorical_cols = [
+            col
+            for col in df.select_dtypes(include=["object", "category", "bool"]).columns
+            if col not in coerced_source_cols
+        ]
+        if categorical_cols:
+            cat_col = st.selectbox("Categorical column", categorical_cols, key="dashboard_cat_col")
+            max_categories_to_show = 30
+            counts_all = df[cat_col].astype(str).value_counts(dropna=False)
+            total_categories = int(counts_all.shape[0])
+
+            if total_categories <= max_categories_to_show:
+                counts = counts_all
+            else:
+                top_n = st.slider(
+                    "Top categories",
+                    min_value=5,
+                    max_value=max_categories_to_show,
+                    value=10,
+                    key="dashboard_top_n",
+                )
+                counts = counts_all.head(top_n)
+
+            st.bar_chart(counts)
+            st.caption(
+                f"Showing {counts.shape[0]} out of {total_categories} total categories."
+            )
+        else:
+            st.caption("No categorical columns detected.")
+
+    with dist_col2:
+        st.subheader("Numeric Distribution")
+        numeric_labels = list(numeric_candidates.keys())
+
+        if numeric_labels:
+            num_col = st.selectbox("Numeric column", numeric_labels, key="dashboard_num_col")
+            num_data = numeric_candidates[num_col].dropna()
+            if num_data.empty:
+                st.caption("Selected numeric column has no non-null values.")
+            else:
+                hist_fig = go.Figure(data=[go.Histogram(x=num_data, nbinsx=30)])
+                hist_fig.update_layout(
+                    title=f"Distribution of {num_col}",
+                    xaxis_title=num_col,
+                    yaxis_title="Count",
+                )
+                st.plotly_chart(hist_fig, width="stretch")
+
+                info = parse_info.get(num_col, {})
+                if info.get("converted"):
+                    st.caption(
+                        f"Auto-coerced from `{info.get('source_col')}`. "
+                        f"Parseable values: {info.get('parse_ratio', 0.0) * 100:.1f}%."
+                    )
+        else:
+            st.caption("No numeric columns detected.")
+
+    st.markdown("---")
 
 # Pre-load question into text box if rerun is scheduled
 if st.session_state["pending_question"] is not None:

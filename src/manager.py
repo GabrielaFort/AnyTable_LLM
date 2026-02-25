@@ -6,7 +6,6 @@ from src.utils import question_classifier_llm, plotter_llm, query_llm, stats_llm
 from src.analytical_modules import TableQAModule, PlottingModule, StatisticsModule, ErrorCorrector
 import traceback
 import numpy as np
-from sentence_transformers import SentenceTransformer
 import logging
 
 # Set up logger
