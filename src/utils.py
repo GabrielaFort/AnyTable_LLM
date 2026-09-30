@@ -12,42 +12,42 @@ from pathlib import Path
 
 # Instantiate LLM clients with preset configurations for different tasks. 
 def question_classifier_llm(): 
-    myllm = LLMClient(model="gemini-3-flash-preview:cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                       api_url="https://ollama.com",
                       temperature=0,
                       api_key=os.getenv("OLLAMA_API_KEY_3"))
     return myllm
 
 def query_llm():
-    myllm = LLMClient(model="gemini-3-flash-preview:cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                 api_url="https://ollama.com",
                 temperature=0,
                 api_key=os.getenv("OLLAMA_API_KEY_3"))
     return myllm
 
 def plotter_llm():
-    myllm = LLMClient(model="gemini-3-flash-preview:cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                 api_url="https://ollama.com",
                 temperature=0.5,
                 api_key=os.getenv("OLLAMA_API_KEY_3"))
     return myllm
 
 def stats_llm():
-    myllm = LLMClient(model="gemini-3-flash-preview:cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                 api_url="https://ollama.com",
                 temperature=0.1,
                 api_key=os.getenv("OLLAMA_API_KEY_3"))
     return myllm  
 
 def error_checker_llm():
-    myllm = LLMClient(model="qwen3-coder:480b-cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                 api_url="https://ollama.com",
                 temperature=0,
                 api_key=os.getenv("OLLAMA_API_KEY_3"))
     return myllm  
 
 def explanation_llm():
-    myllm = LLMClient(model="gemini-3-flash-preview:cloud",
+    myllm = LLMClient(model="glm-5.3:cloud",
                 api_url="https://ollama.com",
                 temperature=0.1,
                 api_key=os.getenv("OLLAMA_API_KEY_3"))
@@ -140,6 +140,7 @@ Preview (first {max_rows} unique non-null values per column):
 Schema notes:
 {hint_text}
 """
+    print(summary)
     return summary
 
 
