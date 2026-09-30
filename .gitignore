@@ -5,3 +5,4 @@ __pycache__
 /test_data/23PRJ128HCI_20230822_Medications_V4.csv
 anytable-llm.tar
 .DS_Store
+VM_DEPLOYMENT_INSTRUCTIONS.md
