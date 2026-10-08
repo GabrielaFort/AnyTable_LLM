@@ -13,6 +13,8 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r docker/requirements.txt
 export OLLAMA_API_KEY_3="your-api-key"
+# Optional: defaults to glm-5.3:cloud
+export ANYTABLE_LLM_MODEL="gpt-oss:120b-cloud"
 streamlit run app.py
 ```
 
@@ -20,13 +22,17 @@ An Ollama cloud api key must be supplied to access LLM models (current default: 
 
 Open the local URL printed by Streamlit, choose an example dataset or upload a CSV, then ask a question about the table.
 
-The configured model and endpoint live in `src/utils.py`. Update them there if you use a different Ollama-compatible model.
+The endpoint lives in `src/utils.py`. Set `ANYTABLE_LLM_MODEL` to use a different
+Ollama-compatible model; it defaults to `glm-5.3:cloud`.
 
 ## Docker
 
 ```bash
 docker build -f docker/Dockerfile -t anytable-llm .
-docker run --rm -p 8501:8501 -e OLLAMA_API_KEY_3="your-api-key" anytable-llm
+docker run --rm -p 8501:8501 \
+  -e OLLAMA_API_KEY_3="your-api-key" \
+  -e ANYTABLE_LLM_MODEL="gpt-oss:120b-cloud" \
+  anytable-llm
 ```
 
 Then open `http://localhost:8501`.

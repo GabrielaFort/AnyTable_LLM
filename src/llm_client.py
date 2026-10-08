@@ -35,12 +35,3 @@ class LLMClient:
             raise ValueError(f"Unexpected response: {content}")
         
 
-if __name__ == "__main__":    # Example usage
-    import os
-    llm = LLMClient(model="gpt-oss:120b-cloud",
-                    api_url="https://ollama.com",
-                    temperature=0.1,  
-                    api_key=os.getenv("OLLAMA_API_KEY_3"))
-    prompt = "What is the capital of France?"
-    response = llm.generate(prompt)
-    print(response)  # Should print "Paris" 
